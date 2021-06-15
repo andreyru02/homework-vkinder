@@ -1,9 +1,11 @@
+import time
 from random import randrange
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 from utils.search_photo import Photo
 import config
 from utils.favorites import update_favorites, get_favorites
+from utils.txt import instructions, step_3
 
 
 class Message(Photo):
@@ -18,15 +20,6 @@ class Message(Photo):
         search_top_photo = photo.get_top_photo()
         return search_top_photo
 
-    def instructions(self):
-        txt = 'Привет!\n' \
-              'Vkinder - чат-бот ищущий людей на основании введенных поисковых данных.\n' \
-              'Сейчас я отправлю первого человека подходящего под критерии поиска.\n' \
-              'Для того, что бы отправить следующего человека напиши в чат "далее".\n' \
-              'Что бы добавить пользователя в избранное отправь ссылку в чат.\n' \
-              'Что бы посмотреть список избранных - напиши в чат "избранные".'
-        return txt
-
     def write_msg(self, user_id, message):
         self.vk.method('messages.send', {'user_id': user_id, 'message': message, 'random_id': randrange(10 ** 7)})
 
@@ -40,17 +33,12 @@ class Message(Photo):
                 if event.to_me:
                     request = event.text.lower()
 
-                    if request == 'начать':
-                        self.write_msg(event.user_id, self.instructions())
+                    if request == 'далее' or request == 'фото' or request == 'поиск':
                         for link, photos in self.top_photo().items():
                             for photo in photos:
                                 self.write_attachment(event.user_id, photo)
                             self.write_attachment(event.user_id, link)
-                    if request == 'далее':
-                        for link, photos in self.top_photo().items():
-                            for photo in photos:
-                                self.write_attachment(event.user_id, photo)
-                            self.write_attachment(event.user_id, link)
+                            self.write_msg(event.user_id, step_3())
 
                     if request[:17] == config.URL_VK:  # добавляем/удаляем в избранное
                         self.write_msg(event.user_id, update_favorites(request[17:]))
@@ -59,3 +47,7 @@ class Message(Photo):
                         favorites = get_favorites()
                         for favorit in favorites:
                             self.write_msg(event.user_id, config.URL_VK + str(favorit[0]))
+
+                    if request == 'инструкция':  # выводим инструкцию
+                        self.write_msg(event.user_id, instructions())
+
