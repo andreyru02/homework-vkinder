@@ -8,7 +8,7 @@ class SQL:
         self.connection = sqlite3.connect(database)
         self.cursor = self.connection.cursor()
         self.create_table_users()
-        self.create_table_photos()
+        # self.create_table_photos()
 
     def create_table_users(self):
         """Создание таблицы для хранения юзеров"""

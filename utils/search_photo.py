@@ -1,6 +1,7 @@
 import requests
 import config
 from database import sql
+from errors_bd import errors
 
 
 class Photo:
@@ -58,7 +59,10 @@ class Photo:
 
     def write_user_bd(self, user_id):
         """Если пользователя в базе нет, то добавляем его"""
-        if not self.bd.user_exists(user_id):
-            self.bd.add_user(user_id)
-            return True
-        return False
+        try:
+            if not self.bd.user_exists(user_id):
+                self.bd.add_user(user_id)
+                return True
+            return False
+        except Exception as err:
+            return bool(errors.check_json(user_id, err))
